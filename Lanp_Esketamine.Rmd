@@ -1,5 +1,23 @@
+---
+title: "Esketamine in adolescents - pilot study"
+author: "Breno Souza-Marques"
+date: "24/04/2021"
+output: html_document
+df_print: paged
+abstract: |
+            This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software. It requires that the dataset available in the Open Science Framework repository ATUALIZAR [https://osf.io/a3892/](https://osf.io/a3892/) is located in the same directory of this file. Please refer to the repository for a detailed description of each variable contained herein.
+            All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
+---
+#### Required Packages
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=F, message=F}
+# Required Packages
 packages = c("tidyverse", "haven",
-             "lsr", "boot", "skimr", "kableExtra",
+             "lsr", "rstatix", "coin", "boot", "skimr", "kableExtra",
              "patchwork", "RColorBrewer", "ggsci")
 package.check <- lapply(
             packages,
@@ -10,13 +28,29 @@ package.check <- lapply(
                         }
             }
 )
+```
 
+
+### Load and manage dataset
+To correctly load the dataset, place the "dataset.sav" file in the same directory of this R Markdown script.
+
+```{r}
 set.seed(252009)
 
 ## Read the database
 df <- haven::read_sav("Dataset.sav")
 df <- haven::zap_formats(df)
 
+```
+
+### Create a function to perform Paired Samples T-tests and print the results with effect sizes
+
+``` {r}
+
+```
+
+#### Perform Paired Samples T-tests for each outcome
+```{r}
 ### T-test - MADRS Total Scores
 
 t.test(x = df$MADRS_pré,
@@ -34,9 +68,11 @@ t.test(x = df$Item10_PréMADRS,
 lsr::cohensD(df$Item10_PréMADRS,
              df$Item10_24hMADRS,
              method = "paired")
+```
 
-## Create bootstrap function
-
+### Create a bootstrap function
+This functions creates a main element, the `data_dens` data frame. It stores the bootstrapped samples of means and medians for each neuropsychological test as they are calculated. These are later used to plot density graphs that compare bootstrapped sample means of pre-and-post assessment performance.
+```{r}
 boot_funs <- function(df, f1, f2){
             a <- df[[f1]]
             b <- df[[f2]]
@@ -63,7 +99,11 @@ boot_funs <- function(df, f1, f2){
             data_dens <<- data.frame(dens, time)
             data_dens$time <- factor(data_dens$time)
 }
+```
 
+#### Run bootstraps
+```{r}
+### Bootstrap CI - MADRS total score
 boot_funs(df, "MADRS_pré", "MADRS_24h")
 
 plot_madrs <- ggplot(data_dens)+
@@ -73,15 +113,18 @@ plot_madrs <- ggplot(data_dens)+
             labs(x = "Total MADRS scores")+
             scale_fill_brewer(name = "Time of assessment:",
                               palette = "Dark2")+
-            theme_classic()+
-            theme(text = element_text(family = "serif"),
-                  axis.text.x = element_text(size = 14),
-                  axis.title.x = element_text(size = 14),
-                  axis.text.y = element_text(size = 14),
-                  axis.title.y = element_text(size = 14),
-                  legend.text = element_text(size = 13),
-                  legend.title = element_text(size = 13))
+  theme_classic()+
+  theme(text = element_text(family = "serif"),
+        axis.text.x = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        legend.text = element_text(size = 13),
+        legend.title = element_text(size = 13))
 
+
+
+### Bootstrap CI - MADRS item 10
 
 boot_funs(df, "Item10_PréMADRS", "Item10_24hMADRS")
 
@@ -93,15 +136,22 @@ plot_madrs10 <- ggplot(data_dens)+
                  y = element_blank())+
             scale_fill_brewer(name = "Time of assessment:",
                               palette = "Dark2")+
-            theme_classic()+
-            theme(text = element_text(family = "serif"),
-                  axis.text.x = element_text(size = 14),
-                  axis.title.x = element_text(size = 14),
-                  axis.text.y = element_text(size = 14),
-                  axis.title.y = element_text(size = 14),
-                  legend.text = element_text(size = 13),
-                  legend.title = element_text(size = 13))
+  theme_classic()+
+  theme(text = element_text(family = "serif"),
+        axis.text.x = element_text(size = 14),
+        axis.title.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        legend.text = element_text(size = 13),
+        legend.title = element_text(size = 13))
 
+
+```
+
+### Graphics
+
+This first part creates an annotated plot using the `ggplot2` density plots for the bootstrapped sample means.
+```{r}
 ## Density plots of bootstrapped sample means
 
 ## Creates patchwork object
@@ -117,13 +167,16 @@ graficos_f <- graficos + plot_layout(guides = "collect")
 ## Edits and annotates patchwork object
 plota <- graficos_f + plot_annotation(
             title = 'Supp. Fig. 1 - Bootstraped sample means for total and item 10 MADRS scores',
-            subtitle = 'Density plots of results at baseline and 7 days post-treatment')
+            subtitle = 'Density plots of results at baseline and 24 hours post-treatment')
 plota
 
 
 ## Saves plot in high resolution
 ggsave("density_plot.png", plota, width=25, height=15, units="cm", dpi=450)
+```
 
+This next part uses a long formatted dataset to compare pre-and post-infusion results for each patient.
+```{r}
 ## Create dataset for total MADRS scores
 madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
 time <- rep(c("baseline", "post"), each = 10)
@@ -190,103 +243,7 @@ item10_plot <- madrs_item_plot %>% ggplot()+
                           group = id,
                           alpha = .4),
                       size = 1.5,
-                      position = position_dodge(0.08))+
-            scale_color_npg()+
-            theme_classic()+
-            labs(x = "Time of assessment",
-                 y = "MADRS item 10 scores")+
-            theme(axis.title.x = element_text(size = 14),
-                  axis.text.x = element_text(size = 13),
-                  axis.title.y = element_text(size = 15),
-                  axis.text.y = element_text(size = 13),
-                  legend.position = "none",
-                  text = element_text(family = "serif"))
-
-## Creates patchwork object
-graficos_i10 <- madrs_plot + item10_plot &
-            theme(text = element_text(family = "serif"),
-                  title = element_text(size = 16),
-                  legend.title = element_text(size = 14))
-
-## Edits and annotates patchwork object
-graficos_i10 <- graficos_i10 + plot_annotation(
-            title = 'Total and item 10 MADRS scores at baseline and 24h post-treatment',
-            subtitle = 'Scores are given for each patient')
-graficos_i10
-
-
-## Saves plot in high resolution
-ggsave("MADRS_plot.png", graficos_i10, width=25, height=15, units="cm", dpi=450)
-
-
-
-## Create dataset for total MADRS scores
-madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
-time <- rep(c("baseline", "post"), each = 10)
-id <- rep(1:10, 2)
-id <- factor(id)
-madrs_data_plot <- tibble(id, time, madrs_total)
-
-## plot total MADRS scores
-madrs_plot <- madrs_data_plot %>% ggplot()+
-            geom_boxplot(aes(x = time, y = madrs_total),
-                         width = .3,
-                         alpha = .3,
-                         color = "grey")+
-            scale_y_continuous(breaks = seq(from = 10,
-                                            to = 50,
-                                            by = 5))+
-            scale_x_discrete(labels = c("Baseline", "24 hours post-infusion"))+
-            geom_point(aes(x = time, y = madrs_total,
-                           color = id,
-                           group = id),
-                       size = 1.5)+
-            geom_line(aes(x = time, y = madrs_total,
-                          color = id,
-                          group = id,
-                          alpha = .4),
-                      size = 1.5)+
-            scale_color_npg()+
-            theme_classic()+
-            labs(x = "Time of assessment",
-                 y = "Total MADRS scores")+
-            theme(axis.title.x = element_text(size = 14),
-                  axis.text.x = element_text(size = 13),
-                  axis.title.y = element_text(size = 15),
-                  axis.text.y = element_text(size = 13),
-                  legend.position = "none")
-
-## Create dataset for MADRS Item 10
-
-si_pre <- df$Item10_PréMADRS
-si_post <- df$Item10_24hMADRS
-
-madrs_item10 <- c(si_pre, si_post)
-time <- rep(c("baseline", "post"), each = 10)
-id <- rep(1:10, 2)
-id <- factor(id)
-madrs_item_plot <- tibble(id, time, madrs_item10)
-
-item10_plot <- madrs_item_plot %>% ggplot()+
-            geom_boxplot(aes(x = time, y = madrs_item10),
-                         width = .3,
-                         alpha = .3,
-                         color = "grey")+
-            scale_y_continuous(breaks = seq(from = 0,
-                                            to = 6,
-                                            by = 1))+
-            scale_x_discrete(labels = c("Baseline", "24 hours post-infusion"))+
-            geom_point(aes(x = time, y = madrs_item10,
-                           color = id,
-                           group = id),
-                       size = 1.5,
                        position = position_dodge(0.08))+
-            geom_line(aes(x = time, y = madrs_item10,
-                          color = id,
-                          group = id,
-                          alpha = .4),
-                      size = 1.5,
-                      position = position_dodge(0.08))+
             scale_color_npg()+
             theme_classic()+
             labs(x = "Time of assessment",
@@ -313,3 +270,5 @@ graficos_i10
 
 ## Saves plot in high resolution
 ggsave("MADRS_plot.png", graficos_i10, width=25, height=15, units="cm", dpi=450)
+```
+
