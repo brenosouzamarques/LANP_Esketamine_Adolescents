@@ -17,8 +17,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, warning=F, message=F}
 # Required Packages
 packages = c("tidyverse", "haven",
-             "lsr", "rstatix", "coin", "boot", "skimr", "kableExtra",
-             "patchwork", "RColorBrewer", "ggsci")
+             "lsr", "rstatix", "exactRankTests", "boot", "skimr", "kableExtra",
+             "patchwork", "RColorBrewer", "ggsci", "car")
 package.check <- lapply(
             packages,
             FUN = function(x) {
@@ -43,15 +43,41 @@ df <- haven::zap_formats(df)
 
 ```
 
-### Create a function to perform Paired Samples T-tests and print the results with effect sizes
 
-``` {r}
-
-```
-
-#### Perform Paired Samples T-tests for each outcome
+#### Perform Paired Samples Wilcoxon or T-tests for each outcome
 ```{r}
-### T-test - MADRS Total Scores
+### Assess normality
+
+## MADRS Total score
+car::qqPlot(df$MADRS_pré)
+car::qqPlot(df$MADRS_24h)
+
+## MADRS Item 10 score
+car::qqPlot(df$Item10_PréMADRS)
+car::qqPlot(df$Item10_24hMADRS)
+
+## Descriptives
+madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
+time <- rep(c("baseline", "post"), each = 10)
+data_madrs_total <- tibble(time, madrs_total)
+data_madrs_total %>% group_by(time) %>% 
+  summarise(
+  mean = mean(madrs_total),
+  sd = sd(madrs_total)
+)
+
+
+item_10_total <- c(df$Item10_PréMADRS, df$Item10_24hMADRS)
+time <- rep(c("baseline", "post"), each = 10)
+data_madrs_total <- tibble(time, item_10_total)
+data_madrs_total %>% group_by(time) %>% 
+  summarise(
+  mean = mean(item_10_total),
+  sd = sd(item_10_total)
+)
+
+
+### Wilcoxon - MADRS Total Scores
 
 t.test(x = df$MADRS_pré,
        y = df$MADRS_24h,
