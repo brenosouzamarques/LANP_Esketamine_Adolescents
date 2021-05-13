@@ -77,7 +77,7 @@ data_madrs_total %>% group_by(time) %>%
 )
 
 
-### Wilcoxon - MADRS Total Scores
+### T-test - MADRS Total Scores
 
 t.test(x = df$MADRS_pré,
        y = df$MADRS_24h,

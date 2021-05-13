@@ -313,3 +313,7 @@ graficos_i10
 
 ## Saves plot in high resolution
 ggsave("MADRS_plot.png", graficos_i10, width=25, height=15, units="cm", dpi=450)
+
+
+
+sessionInfo()
