@@ -1,24 +1,34 @@
 ---
-title: "Esketamine in adolescents - pilot study"
-author: "Breno Souza-Marques"
-date: "24/04/2021"
-output: html_document
-df_print: paged
-abstract: |
-            This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software. It requires that the dataset available in the Open Science Framework repository ATUALIZAR [https://osf.io/a3892/](https://osf.io/a3892/) is located in the same directory of this file. Please refer to the repository for a detailed description of each variable contained herein.
-            All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
+title: "Antidepressant effects of esketamine in adolescents with major depressive disorder and suicidal ideation: a case series"
+subtitle: Reproducible analysis report
+author:
+ - Daniela Faria-Guimarães
+ - Lucca S. Souza
+ - Breno Souza-Marques
+ - Flávia Vieria
+ - Igor D. Bandeira
+ - Samantha S. Silva
+ - Aline S. Sampaio
+ - Lucas C. Quarantini
+output: 
+    bookdown::pdf_document2:
+      number_sections: false
+      toc: false
 ---
-#### Required Packages
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+# Note
+
+This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software and produce an illustrative PDF file. Code-only scripts are also available in the Open Science Framework repository for this study, at [https://osf.io/2ujqn/](https://osf.io/2ujqn/). The reproduction of this `markdown` file requires that the dataset available in the OSF repository is located in the same directory of this file, and that the user has the necessary dependencies to create a PDF using the `bookdown` package. Further information is available at the [package website](https://bookdown.org). Please refer to the repository for a detailed description of each variable contained herein. All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
+
 
 ```{r, warning=F, message=F}
 # Required Packages
 packages = c("tidyverse", "haven",
              "lsr", "rstatix", "exactRankTests", "boot", "skimr", "kableExtra",
-             "patchwork", "RColorBrewer", "ggsci", "car")
+             "patchwork", "RColorBrewer", "ggsci", "car", "printr")
 package.check <- lapply(
             packages,
             FUN = function(x) {
@@ -31,32 +41,49 @@ package.check <- lapply(
 ```
 
 
-### Load and manage dataset
-To correctly load the dataset, place the "dataset.sav" file in the same directory of this R Markdown script.
+# Load and manage dataset
+To correctly load the data, place the "dataset.sav" file in the same directory of this R Markdown script.
 
-```{r}
+```{r, warning = F, message = F}
 set.seed(252009)
 
 ## Read the database
 df <- haven::read_sav("Dataset.sav")
-df <- haven::zap_formats(df)
+df <- haven::zap_formats(df) #remove unnecessary information from columns
 
 ```
 
+\newpage
+# Assessing distribution and descriptives
 
-#### Perform Paired Samples Wilcoxon or T-tests for each outcome
-```{r}
-### Assess normality
+## Visualize data distribution at each timepoint
 
-## MADRS Total score
+### MADRS total score at baseline
+```{r, fig.align='center', out.width= '50%', message = F, warning= F}
 car::qqPlot(df$MADRS_pré)
+```
+
+### MADRS total score at 24h post-treatment
+```{r, fig.align='center', out.width= '50%', message = F, warning= F}
 car::qqPlot(df$MADRS_24h)
+```
 
-## MADRS Item 10 score
+\newpage
+### MADRS item 10 score at baseline
+```{r, fig.align='center', out.width= '50%', message = F, warning= F}
 car::qqPlot(df$Item10_PréMADRS)
-car::qqPlot(df$Item10_24hMADRS)
+```
 
-## Descriptives
+### MADRS item 10 score at 24h post-treatment
+```{r, fig.align='center', out.width= '50%', message = F, warning= F}
+car::qqPlot(df$Item10_24hMADRS)
+```
+
+\newpage
+
+### MADRS total scores
+
+```{r, warning = F, message = F}
 madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
 time <- rep(c("baseline", "post"), each = 10)
 data_madrs_total <- tibble(time, madrs_total)
@@ -66,7 +93,17 @@ data_madrs_total %>% group_by(time) %>%
   sd = sd(madrs_total)
 )
 
+```
+|
+|
 
+---
+|
+|
+
+### MADRS item 10 scores
+
+```{r}
 item_10_total <- c(df$Item10_PréMADRS, df$Item10_24hMADRS)
 time <- rep(c("baseline", "post"), each = 10)
 data_madrs_total <- tibble(time, item_10_total)
@@ -75,29 +112,50 @@ data_madrs_total %>% group_by(time) %>%
   mean = mean(item_10_total),
   sd = sd(item_10_total)
 )
+```
 
+\newpage
 
+# T-tests and effect sizes
+|
+```{r}
 ### T-test - MADRS Total Scores
 
 t.test(x = df$MADRS_pré,
        y = df$MADRS_24h,
-       paired = T)
+       paired = T) ## do paired sample T-tests
+
+
 lsr::cohensD(df$MADRS_pré,
              df$MADRS_24h,
-             method = "paired")
+             method = "paired") ## calculate Cohen's effect size
 
+
+
+```
+
+
+```{r}
 ### T-test - MADRS Item 10 scores
 
 t.test(x = df$Item10_PréMADRS,
        y = df$Item10_24hMADRS,
        paired = T)
+
+
 lsr::cohensD(df$Item10_PréMADRS,
              df$Item10_24hMADRS,
              method = "paired")
 ```
 
-### Create a bootstrap function
-This functions creates a main element, the `data_dens` data frame. It stores the bootstrapped samples of means and medians for each neuropsychological test as they are calculated. These are later used to plot density graphs that compare bootstrapped sample means of pre-and-post assessment performance.
+
+\newpage
+
+# Bootstrapped 95% confidence intervals
+
+## Create a bootstrap function
+
+This functions creates a main element, the `data_dens` data frame. It stores the bootstrapped samples of means as they are calculated using the bias-corrected and accelerated (Bca) method. These are later used to plot density graphs that compare bootstrapped distributions of pre-and post-treatment symptoms.
 ```{r}
 boot_funs <- function(df, f1, f2){
             a <- df[[f1]]
@@ -114,8 +172,8 @@ boot_funs <- function(df, f1, f2){
             boot_ci_b <- boot.ci(boot.out = boot_b, #Calculate post-treatment CI
                                  conf = 0.95,
                                  type = "bca")
-            print(boot_ci_a)
-            print(boot_ci_b)
+            print(boot_ci_a) # Return baseline bootstrapped CI
+            print(boot_ci_b) # Return post-treatment bootstrapped CI
             
             ## Code to extract bootstrapped sample means
             densitiy_a <- boot_a$t
@@ -127,7 +185,12 @@ boot_funs <- function(df, f1, f2){
 }
 ```
 
-#### Run bootstraps
+
+
+\newpage
+## Run bootstraps and create ggplot graph objects
+
+### Bootstrap - MADRS total score
 ```{r}
 ### Bootstrap CI - MADRS total score
 boot_funs(df, "MADRS_pré", "MADRS_24h")
@@ -146,10 +209,12 @@ plot_madrs <- ggplot(data_dens)+
         axis.text.y = element_text(size = 14),
         axis.title.y = element_text(size = 14),
         legend.text = element_text(size = 13),
-        legend.title = element_text(size = 13))
+        legend.title = element_text(size = 13)) ##ggplot2 graph
+```
+\newpage
+### Bootstrap - MADRS item 10
 
-
-
+```{r}
 ### Bootstrap CI - MADRS item 10
 
 boot_funs(df, "Item10_PréMADRS", "Item10_24hMADRS")
@@ -169,14 +234,15 @@ plot_madrs10 <- ggplot(data_dens)+
         axis.text.y = element_text(size = 14),
         axis.title.y = element_text(size = 14),
         legend.text = element_text(size = 13),
-        legend.title = element_text(size = 13))
+        legend.title = element_text(size = 13)) ##ggplot2 graph
 
 
 ```
 
-### Graphics
+\newpage
+# Graphics
 
-This first part creates an annotated plot using the `ggplot2` density plots for the bootstrapped sample means.
+This first part creates an annotated plot using the `ggplot2` density plots for the bootstrapped sample means and the `patchwork` package.
 ```{r}
 ## Density plots of bootstrapped sample means
 
@@ -194,12 +260,12 @@ graficos_f <- graficos + plot_layout(guides = "collect")
 plota <- graficos_f + plot_annotation(
             title = 'Supp. Fig. 1 - Bootstraped sample means for total and item 10 MADRS scores',
             subtitle = 'Density plots of results at baseline and 24 hours post-treatment')
-plota
-
 
 ## Saves plot in high resolution
 ggsave("density_plot.png", plota, width=25, height=15, units="cm", dpi=450)
 ```
+
+|
 
 This next part uses a long formatted dataset to compare pre-and post-infusion results for each patient.
 ```{r}
@@ -281,6 +347,10 @@ item10_plot <- madrs_item_plot %>% ggplot()+
                   legend.position = "none",
                   text = element_text(family = "serif"))
 
+```
+## Join and save plots
+
+```{r, message = F, warning= F}
 ## Creates patchwork object
 graficos_i10 <- madrs_plot + item10_plot &
             theme(text = element_text(family = "serif"),
@@ -291,11 +361,9 @@ graficos_i10 <- madrs_plot + item10_plot &
 graficos_i10 <- graficos_i10 + plot_annotation(
             title = 'Total and item 10 MADRS scores at baseline and 24h post-treatment',
             subtitle = 'Scores are given for each patient')
-graficos_i10
-
 
 ## Saves plot in high resolution
 ggsave("MADRS_plot.png", graficos_i10, width=25, height=15, units="cm", dpi=500)
-
 ```
+
 
