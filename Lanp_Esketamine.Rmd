@@ -12,8 +12,8 @@ author:
  - Lucas C. Quarantini
 output: 
     bookdown::pdf_document2:
-      number_sections: false
-      toc: false
+      number_sections: true
+      toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -23,29 +23,33 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software and produce an illustrative PDF file. Code-only scripts are also available in the Open Science Framework repository for this study, at [https://osf.io/2ujqn/](https://osf.io/2ujqn/). The reproduction of this `markdown` file requires that the dataset available in the OSF repository is located in the same directory of this file, and that the user has the necessary dependencies to create a PDF using the `bookdown` package. Further information is available at the [package website](https://bookdown.org). Please refer to the repository for a detailed description of each variable contained herein. All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
 
+To help with reproducibility, the `{renv}` R package was used. The `renv.lock` file and the package folder are also available and should be imported to the same location on your computer as this script. For further information on how to use `{renv}` visit the package website: [https://rstudio.github.io/renv/articles/renv.html](https://rstudio.github.io/renv/articles/renv.html).
+
+# Load the required packages
+
 
 ```{r, warning=F, message=F}
 # Required Packages
-packages = c("tidyverse", "haven",
-             "lsr", "rstatix", "exactRankTests", "boot", "skimr", "kableExtra",
-             "patchwork", "RColorBrewer", "ggsci", "car", "printr")
-package.check <- lapply(
-            packages,
-            FUN = function(x) {
-                        if (!require(x, character.only = TRUE)) {
-                                    install.packages(x)
-                                    library(x, character.only = TRUE)
-                        }
-            }
-)
+library(tidyverse)
+library(haven)
+library(lsr)
+library(rstatix)
+library(boot)
+library(kableExtra)
+library(patchwork)
+library(RColorBrewer)
+library(ggsci)
+library(car)
+library(purrr)
+library(broom)
 ```
 
+# Load the dataset
 
-# Load and manage dataset
-To correctly load the data, place the "dataset.sav" file in the same directory of this R Markdown script.
+The first step is to load the dataset into R. To correctly load the data, place the "dataset.sav" file in the same directory of this R Markdown script.
 
 ```{r, warning = F, message = F}
-set.seed(252009)
+set.seed(252009) # for reproducible bootstrap results
 
 ## Read the database
 df <- haven::read_sav("Dataset.sav")
@@ -53,103 +57,124 @@ df <- haven::zap_formats(df) #remove unnecessary information from columns
 
 ```
 
-\newpage
-# Assessing distribution and descriptives
 
-## Visualize data distribution at each timepoint
+# Visualizing distribution of dependent variables
 
-### MADRS total score at baseline
-```{r, fig.align='center', out.width= '50%', message = F, warning= F}
-car::qqPlot(df$MADRS_pré)
+Q-Q Plots are used to assess the symmetry of dependent variables, that is, **MADRS total score** and **MADRS item 10** at baseline and 24-h post-infusion.
+
+## MADRS total score at baseline and 24h post-treatment
+```{r echo=TRUE, fig.align='center', fig.show='hold', message=FALSE, warning=FALSE, out.width='40%'}
+qqplot_madrs_pre <- car::qqPlot(df$MADRS_pré)
+qqplot_madrs_post <- car::qqPlot(df$MADRS_24h)
+
+print(qqplot_madrs_pre, qqplot_madrs_post)
 ```
 
-### MADRS total score at 24h post-treatment
-```{r, fig.align='center', out.width= '50%', message = F, warning= F}
-car::qqPlot(df$MADRS_24h)
+## MADRS item 10 score at baseline and 24h post-treatment
+```{r, fig.align='center', out.width= '40%', fig.show = 'hold', message = F, warning= F}
+qqplot_item10_pre <- car::qqPlot(df$Item10_PréMADRS)
+qqplot_item10_post <- car::qqPlot(df$Item10_24hMADRS)
+
+print(qqplot_item10_pre, qqplot_item10_post)
 ```
 
-\newpage
-### MADRS item 10 score at baseline
-```{r, fig.align='center', out.width= '50%', message = F, warning= F}
-car::qqPlot(df$Item10_PréMADRS)
-```
+# Descriptives
 
-### MADRS item 10 score at 24h post-treatment
-```{r, fig.align='center', out.width= '50%', message = F, warning= F}
-car::qqPlot(df$Item10_24hMADRS)
-```
+Total depressive symptoms and suicidal ideation scores are presented as means and standard deviations.
 
-\newpage
-
-### MADRS total scores
+## MADRS total scores
 
 ```{r, warning = F, message = F}
 madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
 time <- rep(c("baseline", "post"), each = 10)
 data_madrs_total <- tibble(time, madrs_total)
-data_madrs_total %>% group_by(time) %>% 
-  summarise(
-  mean = mean(madrs_total),
-  sd = sd(madrs_total)
-)
+kbl(data_madrs_total %>% group_by(time) %>% 
+      summarise(
+        Mean = mean(madrs_total),
+        "Std dev" = sd(madrs_total),
+        Maximum = max(madrs_total),
+        Minimum = min(madrs_total)),
+    caption = "MADRS total score",
+    booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
+
 
 ```
 |
-|
 
----
-|
-|
-
-### MADRS item 10 scores
+## MADRS item 10 scores
 
 ```{r}
 item_10_total <- c(df$Item10_PréMADRS, df$Item10_24hMADRS)
 time <- rep(c("baseline", "post"), each = 10)
 data_madrs_total <- tibble(time, item_10_total)
-data_madrs_total %>% group_by(time) %>% 
+kbl(
+  data_madrs_total %>% 
+  group_by(time) %>% 
   summarise(
-  mean = mean(item_10_total),
-  sd = sd(item_10_total)
-)
+    Mean = mean(item_10_total),
+    "Std dev" = sd(item_10_total),
+    Maximum = max(item_10_total),
+    Minimun = min(item_10_total)),
+  caption = "MADRS item 10 score",
+  booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
+  
 ```
 
-\newpage
 
-# T-tests and effect sizes
-|
+# Hypothesis tests
+
+## T-tests
+
+We first aim to determine if the difference between pre-and post-treatment outcomes is significant. We test this hypothesis with a paired samples t-test for each outcome, as follows.
+
 ```{r}
 ### T-test - MADRS Total Scores
 
-t.test(x = df$MADRS_pré,
-       y = df$MADRS_24h,
-       paired = T) ## do paired sample T-tests
+
+ttest_total_madrs <- t.test(x = df$MADRS_pré,
+                      y = df$MADRS_24h,
+                      paired = T)
 
 
-lsr::cohensD(df$MADRS_pré,
-             df$MADRS_24h,
-             method = "paired") ## calculate Cohen's effect size
+ttest_item10_madrs <- t.test(x = df$Item10_PréMADRS,
+                       y = df$Item10_24hMADRS,
+                       paired = T)
 
+table_madrs <- map_df(list(ttest_total_madrs, ttest_item10_madrs), tidy)
 
+table_madrs$'Dependent Variable' <- c("MADRS total score",
+                                      "MADRS item 10")
+
+kbl(table_madrs[c("Dependent Variable",
+                  "estimate",
+                  "statistic",
+                  "p.value")],
+      caption = "T-tests",
+      booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
 
 ```
+\newpage
+## Effect sizes
 
+Effect sizes allow further interpretation of how significant are these changes from baseline to 24 hours post-ketamine treatment.
 
 ```{r}
-### T-test - MADRS Item 10 scores
+effectsize_madrs <- lsr::cohensD(df$MADRS_pré,
+                                 df$MADRS_24h,
+                                 method = "paired")
 
-t.test(x = df$Item10_PréMADRS,
-       y = df$Item10_24hMADRS,
-       paired = T)
+effectsize_item10 <- lsr::cohensD(df$Item10_PréMADRS,
+                                  df$Item10_24hMADRS,
+                                  method = "paired")
 
-
-lsr::cohensD(df$Item10_PréMADRS,
-             df$Item10_24hMADRS,
-             method = "paired")
+kbl(tribble(~Outcome, ~"Effect Size (Cohen's D)",
+        "MADRS total score", effectsize_madrs,
+        "MADRS item 10", effectsize_item10),
+    caption = "Effect sizes",
+    booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
+  
 ```
 
-
-\newpage
 
 # Bootstrapped 95% confidence intervals
 
