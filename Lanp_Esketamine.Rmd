@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 # Note
 
-This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software and produce an illustrative PDF file. Code-only scripts are also available in the Open Science Framework repository for this study, at [https://osf.io/2ujqn/](https://osf.io/2ujqn/). The reproduction of this `markdown` file requires that the dataset available in the OSF repository is located in the same directory of this file, and that the user has the necessary dependencies to create a PDF using the `bookdown` package. Further information is available at the [package website](https://bookdown.org). Please refer to the repository for a detailed description of each variable contained herein. All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
+This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software and produce an illustrative PDF file. Code-only scripts are also available in the Open Science Framework repository for this study, at [https://osf.io/2ujqn/](https://osf.io/2ujqn/). The reproduction of this `markdown` file requires that the dataset available in the OSF repository is located in the same directory of this file, and that the user has the necessary dependencies to create a PDF using the `bookdown` package. Further information is available at the *[package website](https://bookdown.org)*. Please refer to the repository for a detailed description of each variable contained herein. All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
 
 To help with reproducibility, the `{renv}` R package was used. The `renv.lock` file and the package folder are also available and should be imported to the same location on your computer as this script. For further information on how to use `{renv}` visit the package website: [https://rstudio.github.io/renv/articles/renv.html](https://rstudio.github.io/renv/articles/renv.html).
 
@@ -46,14 +46,20 @@ library(broom)
 
 # Load the dataset
 
-The first step is to load the dataset into R. To correctly load the data, place the "dataset.sav" file in the same directory of this R Markdown script.
+The first step is to load the dataset into R. You can load the dataset directly from the GitHub repository.
 
 ```{r, warning = F, message = F}
-set.seed(252009) # for reproducible bootstrap results
+## Load from GitHub repository
 
-## Read the database
-df <- haven::read_sav("Dataset.sav")
-df <- haven::zap_formats(df) #remove unnecessary information from columns
+urlRemote  <- "https://raw.githubusercontent.com/"
+pathGithub <- "brenosouzamarques/LANP_Esketamine_Adolescents/master/"
+fileName   <- "Dataset.csv"
+
+df <- paste0(urlRemote, pathGithub, fileName) %>% 
+  read.csv()
+
+
+
 
 ```
 
@@ -153,7 +159,7 @@ kbl(table_madrs[c("Dependent Variable",
       booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
 
 ```
-\newpage
+
 ## Effect sizes
 
 Effect sizes allow further interpretation of how significant are these changes from baseline to 24 hours post-ketamine treatment.
@@ -346,9 +352,7 @@ item10_plot <- madrs_item_plot %>% ggplot()+
                          width = .3,
                          alpha = .3,
                          color = "grey")+
-            scale_y_continuous(breaks = seq(from = 0,
-                                            to = 6,
-                                            by = 1))+
+            scale_y_continuous(breaks = c(0, 1, 2, 3, 4, 5, 6))+
             scale_x_discrete(labels = c("Baseline", "24 hours post-infusion"))+
             geom_point(aes(x = time, y = madrs_item10,
                            color = id,
