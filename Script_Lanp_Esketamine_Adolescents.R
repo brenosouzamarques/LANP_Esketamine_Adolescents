@@ -1,21 +1,24 @@
-packages = c("tidyverse", "haven",
-             "lsr", "boot", "skimr", "kableExtra",
-             "patchwork", "RColorBrewer", "ggsci")
-package.check <- lapply(
-            packages,
-            FUN = function(x) {
-                        if (!require(x, character.only = TRUE)) {
-                                    install.packages(x)
-                                    library(x, character.only = TRUE)
-                        }
-            }
-)
+library(tidyverse)
+library(haven)
+library(lsr)
+library(rstatix)
+library(boot)
+library(kableExtra)
+library(patchwork)
+library(RColorBrewer)
+library(ggsci)
+library(car)
+library(purrr)
+library(broom)
 
-set.seed(252009)
+## Load from GitHub repository
 
-## Read the database
-df <- haven::read_sav("Dataset.sav")
-df <- haven::zap_formats(df)
+urlRemote  <- "https://raw.githubusercontent.com/"
+pathGithub <- "brenosouzamarques/LANP_Esketamine_Adolescents/master/"
+fileName   <- "Dataset.csv"
+
+df <- paste0(urlRemote, pathGithub, fileName) %>% 
+            read.csv()
 
 ### T-test - MADRS Total Scores
 
