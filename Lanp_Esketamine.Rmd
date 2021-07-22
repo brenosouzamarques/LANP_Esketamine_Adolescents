@@ -8,6 +8,13 @@ author:
  - Flávia Vieria
  - Igor D. Bandeira
  - Samantha S. Silva
+ - Raíza Alves-Pereira
+ - Mariana Fontes
+ - Rodrig P Mello
+ - Gustavo C Leal
+ - Acioly L T Lacerda
+ - Flávio Kapczinski
+ - Taiane A Cardoso
  - Aline S. Sampaio
  - Lucas C. Quarantini
 output: 
@@ -19,7 +26,10 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-# Note
+
+\newpage
+
+# Note on reproducibility
 
 This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software and produce an illustrative PDF file. Code-only scripts are also available in the Open Science Framework repository for this study, at [https://osf.io/2ujqn/](https://osf.io/2ujqn/). The reproduction of this `markdown` file requires that the dataset available in the OSF repository is located in the same directory of this file, and that the user has the necessary dependencies to create a PDF using the `bookdown` package. Further information is available at the *[package website](https://bookdown.org)*. Please refer to the repository for a detailed description of each variable contained herein. All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
 
@@ -62,11 +72,13 @@ df <- paste0(urlRemote, pathGithub, fileName) %>%
 
 
 ```
-
+\newpage
 
 # Visualizing distribution of dependent variables
 
 Q-Q Plots are used to assess the symmetry of dependent variables, that is, **MADRS total score** and **MADRS item 10** at baseline and 24-h post-infusion.
+
+
 
 ## MADRS total score at baseline and 24h post-treatment
 ```{r echo=TRUE, fig.align='center', fig.show='hold', message=FALSE, warning=FALSE, out.width='40%'}
@@ -83,7 +95,7 @@ qqplot_item10_post <- car::qqPlot(df$Item10_24hMADRS)
 
 print(qqplot_item10_pre, qqplot_item10_post)
 ```
-
+\newpage
 # Descriptives
 
 Total depressive symptoms and suicidal ideation scores are presented as means and standard deviations.
@@ -126,7 +138,7 @@ kbl(
   
 ```
 
-
+\newpage
 # Hypothesis tests
 
 ## T-tests
@@ -154,11 +166,15 @@ table_madrs$'Dependent Variable' <- c("MADRS total score",
 kbl(table_madrs[c("Dependent Variable",
                   "estimate",
                   "statistic",
+                  "conf.low",
+                  "conf.high",
                   "p.value")],
       caption = "T-tests",
       booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
 
 ```
+
+\newpage
 
 ## Effect sizes
 
@@ -181,12 +197,14 @@ kbl(tribble(~Outcome, ~"Effect Size (Cohen's D)",
   
 ```
 
+\newpage
 
 # Bootstrapped 95% confidence intervals
 
 ## Create a bootstrap function
 
 This functions creates a main element, the `data_dens` data frame. It stores the bootstrapped samples of means as they are calculated using the bias-corrected and accelerated (Bca) method. These are later used to plot density graphs that compare bootstrapped distributions of pre-and post-treatment symptoms.
+
 ```{r}
 boot_funs <- function(df, f1, f2){
             a <- df[[f1]]
@@ -273,6 +291,8 @@ plot_madrs10 <- ggplot(data_dens)+
 \newpage
 # Graphics
 
+## Density plots of bootstrapped sample means
+
 This first part creates an annotated plot using the `ggplot2` density plots for the bootstrapped sample means and the `patchwork` package.
 ```{r}
 ## Density plots of bootstrapped sample means
@@ -296,9 +316,12 @@ plota <- graficos_f + plot_annotation(
 ggsave("density_plot.png", plota, width=25, height=15, units="cm", dpi=450)
 ```
 
-|
+\newpage
+
+## Main plots: pre-and post-treatment effects for depressive symptoms and suicidal ideation
 
 This next part uses a long formatted dataset to compare pre-and post-infusion results for each patient.
+
 ```{r}
 ## Create dataset for total MADRS scores
 madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
@@ -330,9 +353,11 @@ madrs_plot <- madrs_data_plot %>% ggplot()+
             theme_classic()+
             labs(x = "Time of assessment",
                  y = "Total MADRS scores")+
-            theme(axis.title.x = element_text(size = 14),
+            theme(axis.title.x = element_text(size = 14,
+                                              face = "bold"),
                   axis.text.x = element_text(size = 13),
-                  axis.title.y = element_text(size = 15),
+                  axis.title.y = element_text(size = 15,
+                                              face = "bold"),
                   axis.text.y = element_text(size = 13),
                   legend.position = "none")
 
@@ -369,15 +394,18 @@ item10_plot <- madrs_item_plot %>% ggplot()+
             theme_classic()+
             labs(x = "Time of assessment",
                  y = "MADRS item 10 scores")+
-            theme(axis.title.x = element_text(size = 14),
+            theme(axis.title.x = element_text(size = 14,
+                                              face = "bold"),
                   axis.text.x = element_text(size = 13),
-                  axis.title.y = element_text(size = 15),
+                  axis.title.y = element_text(size = 15,
+                                              face = "bold"),
                   axis.text.y = element_text(size = 13),
                   legend.position = "none",
                   text = element_text(family = "serif"))
 
 ```
-## Join and save plots
+
+### Join and save plots
 
 ```{r, message = F, warning= F}
 ## Creates patchwork object
@@ -389,10 +417,12 @@ graficos_i10 <- madrs_plot + item10_plot &
 ## Edits and annotates patchwork object
 graficos_i10 <- graficos_i10 + plot_annotation(
             title = 'Total and item 10 MADRS scores at baseline and 24h post-treatment',
-            subtitle = 'Scores are given for each patient')
+            subtitle = 'Scores are given for each patient') &
+  theme()
 
 ## Saves plot in high resolution
-ggsave("MADRS_plot.png", graficos_i10, width=25, height=15, units="cm", dpi=500)
+ggsave("MADRS_plot.png", graficos_i10, width=20, height=10, units="cm", dpi=450)
+ggsave("MADRS_plot.tiff", graficos_i10, width=20, height=10, units="cm", dpi=450)
 ```
 
 

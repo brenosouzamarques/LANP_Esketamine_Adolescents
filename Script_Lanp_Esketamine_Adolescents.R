@@ -120,108 +120,11 @@ graficos_f <- graficos + plot_layout(guides = "collect")
 ## Edits and annotates patchwork object
 plota <- graficos_f + plot_annotation(
             title = 'Supp. Fig. 1 - Bootstraped sample means for total and item 10 MADRS scores',
-            subtitle = 'Density plots of results at baseline and 7 days post-treatment')
-plota
-
+            subtitle = 'Density plots of results at baseline and 24 hours post-treatment')
 
 ## Saves plot in high resolution
 ggsave("density_plot.png", plota, width=25, height=15, units="cm", dpi=450)
 
-## Create dataset for total MADRS scores
-madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
-time <- rep(c("baseline", "post"), each = 10)
-id <- rep(1:10, 2)
-id <- factor(id)
-madrs_data_plot <- tibble(id, time, madrs_total)
-
-## plot total MADRS scores
-madrs_plot <- madrs_data_plot %>% ggplot()+
-            geom_boxplot(aes(x = time, y = madrs_total),
-                         width = .3,
-                         alpha = .3,
-                         color = "grey")+
-            scale_y_continuous(breaks = seq(from = 10,
-                                            to = 50,
-                                            by = 5))+
-            scale_x_discrete(labels = c("Baseline", "24 hours post-infusion"))+
-            geom_point(aes(x = time, y = madrs_total,
-                           color = id,
-                           group = id),
-                       size = 1.5)+
-            geom_line(aes(x = time, y = madrs_total,
-                          color = id,
-                          group = id,
-                          alpha = .4),
-                      size = 1.5)+
-            scale_color_npg()+
-            theme_classic()+
-            labs(x = "Time of assessment",
-                 y = "Total MADRS scores")+
-            theme(axis.title.x = element_text(size = 14),
-                  axis.text.x = element_text(size = 13),
-                  axis.title.y = element_text(size = 15),
-                  axis.text.y = element_text(size = 13),
-                  legend.position = "none")
-
-## Create dataset for MADRS Item 10
-
-si_pre <- df$Item10_PréMADRS
-si_post <- df$Item10_24hMADRS
-
-madrs_item10 <- c(si_pre, si_post)
-time <- rep(c("baseline", "post"), each = 10)
-id <- rep(1:10, 2)
-id <- factor(id)
-madrs_item_plot <- tibble(id, time, madrs_item10)
-
-item10_plot <- madrs_item_plot %>% ggplot()+
-            geom_boxplot(aes(x = time, y = madrs_item10),
-                         width = .3,
-                         alpha = .3,
-                         color = "grey")+
-            scale_y_continuous(breaks = seq(from = 0,
-                                            to = 6,
-                                            by = 1))+
-            scale_x_discrete(labels = c("Baseline", "24 hours post-infusion"))+
-            geom_point(aes(x = time, y = madrs_item10,
-                           color = id,
-                           group = id),
-                       size = 1.5,
-                       position = position_dodge(0.08))+
-            geom_line(aes(x = time, y = madrs_item10,
-                          color = id,
-                          group = id,
-                          alpha = .4),
-                      size = 1.5,
-                      position = position_dodge(0.08))+
-            scale_color_npg()+
-            theme_classic()+
-            labs(x = "Time of assessment",
-                 y = "MADRS item 10 scores")+
-            theme(axis.title.x = element_text(size = 14),
-                  axis.text.x = element_text(size = 13),
-                  axis.title.y = element_text(size = 15),
-                  axis.text.y = element_text(size = 13),
-                  legend.position = "none",
-                  text = element_text(family = "serif"))
-
-## Creates patchwork object
-graficos_i10 <- madrs_plot + item10_plot &
-            theme(text = element_text(family = "serif"),
-                  title = element_text(size = 16),
-                  legend.title = element_text(size = 14))
-
-## Edits and annotates patchwork object
-graficos_i10 <- graficos_i10 + plot_annotation(
-            title = 'Total and item 10 MADRS scores at baseline and 24h post-treatment',
-            subtitle = 'Scores are given for each patient')
-graficos_i10
-
-
-## Saves plot in high resolution
-ggsave("MADRS_plot.png", graficos_i10, width=25, height=15, units="cm", dpi=450)
-
-
 
 ## Create dataset for total MADRS scores
 madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
@@ -253,9 +156,11 @@ madrs_plot <- madrs_data_plot %>% ggplot()+
             theme_classic()+
             labs(x = "Time of assessment",
                  y = "Total MADRS scores")+
-            theme(axis.title.x = element_text(size = 14),
+            theme(axis.title.x = element_text(size = 14,
+                                              face = "bold"),
                   axis.text.x = element_text(size = 13),
-                  axis.title.y = element_text(size = 15),
+                  axis.title.y = element_text(size = 15,
+                                              face = "bold"),
                   axis.text.y = element_text(size = 13),
                   legend.position = "none")
 
@@ -275,9 +180,7 @@ item10_plot <- madrs_item_plot %>% ggplot()+
                          width = .3,
                          alpha = .3,
                          color = "grey")+
-            scale_y_continuous(breaks = seq(from = 0,
-                                            to = 6,
-                                            by = 1))+
+            scale_y_continuous(breaks = c(0, 1, 2, 3, 4, 5, 6))+
             scale_x_discrete(labels = c("Baseline", "24 hours post-infusion"))+
             geom_point(aes(x = time, y = madrs_item10,
                            color = id,
@@ -294,12 +197,15 @@ item10_plot <- madrs_item_plot %>% ggplot()+
             theme_classic()+
             labs(x = "Time of assessment",
                  y = "MADRS item 10 scores")+
-            theme(axis.title.x = element_text(size = 14),
+            theme(axis.title.x = element_text(size = 14,
+                                              face = "bold"),
                   axis.text.x = element_text(size = 13),
-                  axis.title.y = element_text(size = 15),
+                  axis.title.y = element_text(size = 15,
+                                              face = "bold"),
                   axis.text.y = element_text(size = 13),
                   legend.position = "none",
                   text = element_text(family = "serif"))
+
 
 ## Creates patchwork object
 graficos_i10 <- madrs_plot + item10_plot &
@@ -310,13 +216,9 @@ graficos_i10 <- madrs_plot + item10_plot &
 ## Edits and annotates patchwork object
 graficos_i10 <- graficos_i10 + plot_annotation(
             title = 'Total and item 10 MADRS scores at baseline and 24h post-treatment',
-            subtitle = 'Scores are given for each patient')
-graficos_i10
-
+            subtitle = 'Scores are given for each patient') &
+            theme()
 
 ## Saves plot in high resolution
-ggsave("MADRS_plot.png", graficos_i10, width=25, height=15, units="cm", dpi=450)
-
-
-
-sessionInfo()
+ggsave("MADRS_plot.png", graficos_i10, width=20, height=10, units="cm", dpi=450)
+ggsave("MADRS_plot.tiff", graficos_i10, width=20, height=10, units="cm", dpi=450)
