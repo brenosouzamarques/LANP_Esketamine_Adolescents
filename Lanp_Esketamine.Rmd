@@ -10,11 +10,11 @@ author:
  - Samantha S. Silva
  - Raíza Alves-Pereira
  - Mariana Fontes
- - Rodrig P Mello
- - Gustavo C Leal
- - Acioly L T Lacerda
+ - Rodrigo P. Mello
+ - Gustavo C. Leal
+ - Acioly L. T. Lacerda
  - Flávio Kapczinski
- - Taiane A Cardoso
+ - Taiane A. Cardoso
  - Aline S. Sampaio
  - Lucas C. Quarantini
 output: 
@@ -59,6 +59,7 @@ library(broom)
 The first step is to load the dataset into R. You can load the dataset directly from the GitHub repository.
 
 ```{r, warning = F, message = F}
+set.seed(2509)
 ## Load from GitHub repository
 
 urlRemote  <- "https://raw.githubusercontent.com/"
@@ -309,8 +310,8 @@ graficos_f <- graficos + plot_layout(guides = "collect")
 
 ## Edits and annotates patchwork object
 plota <- graficos_f + plot_annotation(
-            title = 'Supp. Fig. 1 - Bootstraped sample means for total and item 10 MADRS scores',
-            subtitle = 'Density plots of results at baseline and 24 hours post-treatment')
+    title = 'Supp. Fig. 1 - Bootstraped sample means for total and item 10 MADRS scores',
+    subtitle = 'Density plots of results at baseline and 24 hours post-treatment')
 
 ## Saves plot in high resolution
 ggsave("density_plot.png", plota, width=25, height=15, units="cm", dpi=450)
@@ -405,7 +406,7 @@ item10_plot <- madrs_item_plot %>% ggplot()+
 
 ```
 
-### Join and save plots
+### Join and save plots!
 
 ```{r, message = F, warning= F}
 ## Creates patchwork object
@@ -416,8 +417,8 @@ graficos_i10 <- madrs_plot + item10_plot &
 
 ## Edits and annotates patchwork object
 graficos_i10 <- graficos_i10 + plot_annotation(
-            title = 'Total and item 10 MADRS scores at baseline and 24h post-treatment',
-            subtitle = 'Scores are given for each patient') &
+    title = 'Total and item 10 MADRS scores at baseline and 24h post-treatment',
+    subtitle = 'Scores are given for each patient') &
   theme()
 
 ## Saves plot in high resolution
