@@ -5,7 +5,7 @@ author:
  - Daniela Faria-Guimarães
  - Lucca S. Souza
  - Breno Souza-Marques
- - Flávia Vieria
+ - Flávia Vieira
  - Igor D. Bandeira
  - Samantha S. Silva
  - Raíza Alves-Pereira
