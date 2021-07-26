@@ -1,6 +1,6 @@
 ---
 title: "Antidepressant effects of esketamine in adolescents with major depressive disorder and suicidal ideation: a case series"
-subtitle: Reproducible analysis report
+subtitle: Reproducible analysis code
 author:
  - Daniela Faria-Guimarães
  - Lucca S. Souza
@@ -31,9 +31,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Note on reproducibility
 
-This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software and produce an illustrative PDF file. Code-only scripts are also available in the Open Science Framework repository for this study, at [https://osf.io/2ujqn/](https://osf.io/2ujqn/). The reproduction of this `markdown` file requires that the dataset available in the OSF repository is located in the same directory of this file, and that the user has the necessary dependencies to create a PDF using the `bookdown` package. Further information is available at the *[package website](https://bookdown.org)*. Please refer to the repository for a detailed description of each variable contained herein. All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
+This R Markdown file will exactly reproduce our data tidying, transformation, analysis and graphing processes in the R software and produce an illustrative PDF file. Code-only scripts are also available in the Open Science Framework repository for this study, at [https://osf.io/2ujqn/](https://osf.io/2ujqn/). The reproduction of this R Markdown file requires that the dataset available in the OSF repository is located in the same directory of this file, and that the user has the necessary dependencies to create a PDF using the `{bookdown}` package. Further information is available at the package website: [https://bookdown.org](https://bookdown.org). Please refer to the repository for a detailed description of each variable contained herein. All files in the repository, including this one, are licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
 
-To help with reproducibility, the `{renv}` R package was used. The `renv.lock` file and the package folder are also available and should be imported to the same location on your computer as this script. For further information on how to use `{renv}` visit the package website: [https://rstudio.github.io/renv/articles/renv.html](https://rstudio.github.io/renv/articles/renv.html).
+The `{renv}` package was used to help with reproducibility. The `renv.lock` file is available and should be imported to the same location on your computer as this script. For further information on how to use these files visit the package website: [https://rstudio.github.io/renv/articles/renv.html](https://rstudio.github.io/renv/articles/renv.html).
 
 # Load the required packages
 
@@ -52,6 +52,7 @@ library(ggsci)
 library(car)
 library(purrr)
 library(broom)
+library(ggpubr)
 ```
 
 # Load the dataset
@@ -75,28 +76,27 @@ df <- paste0(urlRemote, pathGithub, fileName) %>%
 ```
 \newpage
 
-# Visualizing distribution of dependent variables
+# Assess normality of outcomes
 
 Q-Q Plots are used to assess the symmetry of dependent variables, that is, **MADRS total score** and **MADRS item 10** at baseline and 24-h post-infusion.
 
-
-
 ## MADRS total score at baseline and 24h post-treatment
 ```{r echo=TRUE, fig.align='center', fig.show='hold', message=FALSE, warning=FALSE, out.width='40%'}
-qqplot_madrs_pre <- car::qqPlot(df$MADRS_pré)
-qqplot_madrs_post <- car::qqPlot(df$MADRS_24h)
 
-print(qqplot_madrs_pre, qqplot_madrs_post)
+ggqqplot(df$MADRS_Baseline)
+ggqqplot(df$MADRS_Post)
+
 ```
 
 ## MADRS item 10 score at baseline and 24h post-treatment
 ```{r, fig.align='center', out.width= '40%', fig.show = 'hold', message = F, warning= F}
-qqplot_item10_pre <- car::qqPlot(df$Item10_PréMADRS)
-qqplot_item10_post <- car::qqPlot(df$Item10_24hMADRS)
+ggqqplot(df$MADRS_Suicide_Baseline)
+ggqqplot(df$MADRS_Suicide_Post)
 
-print(qqplot_item10_pre, qqplot_item10_post)
 ```
+
 \newpage
+
 # Descriptives
 
 Total depressive symptoms and suicidal ideation scores are presented as means and standard deviations.
@@ -104,7 +104,7 @@ Total depressive symptoms and suicidal ideation scores are presented as means an
 ## MADRS total scores
 
 ```{r, warning = F, message = F}
-madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
+madrs_total <- c(df$MADRS_Baseline, df$MADRS_Post)
 time <- rep(c("baseline", "post"), each = 10)
 data_madrs_total <- tibble(time, madrs_total)
 kbl(data_madrs_total %>% group_by(time) %>% 
@@ -112,7 +112,8 @@ kbl(data_madrs_total %>% group_by(time) %>%
         Mean = mean(madrs_total),
         "Std dev" = sd(madrs_total),
         Maximum = max(madrs_total),
-        Minimum = min(madrs_total)),
+        Minimum = min(madrs_total),
+        Median = median(madrs_total)),
     caption = "MADRS total score",
     booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
 
@@ -123,7 +124,7 @@ kbl(data_madrs_total %>% group_by(time) %>%
 ## MADRS item 10 scores
 
 ```{r}
-item_10_total <- c(df$Item10_PréMADRS, df$Item10_24hMADRS)
+item_10_total <- c(df$MADRS_Suicide_Baseline, df$MADRS_Suicide_Post)
 time <- rep(c("baseline", "post"), each = 10)
 data_madrs_total <- tibble(time, item_10_total)
 kbl(
@@ -133,45 +134,49 @@ kbl(
     Mean = mean(item_10_total),
     "Std dev" = sd(item_10_total),
     Maximum = max(item_10_total),
-    Minimun = min(item_10_total)),
+    Minimun = min(item_10_total),
+    Median = median(item_10_total)),
   caption = "MADRS item 10 score",
   booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
   
 ```
 
 \newpage
-# Hypothesis tests
+# T-tests
 
-## T-tests
-
-We first aim to determine if the difference between pre-and post-treatment outcomes is significant. We test this hypothesis with a paired samples t-test for each outcome, as follows.
+We aimed to determine if a single 0.5mg/kg dose of esketamine can reduce depressive symptoms and suicidal ideation in adolescents. We test this hypothesis with a paired-samples t-test.
 
 ```{r}
 ### T-test - MADRS Total Scores
 
 
-ttest_total_madrs <- t.test(x = df$MADRS_pré,
-                      y = df$MADRS_24h,
-                      paired = T)
+ttest_total_madrs <- t.test(x = df$MADRS_Baseline,
+                            y = df$MADRS_Post,
+                            paired = T,
+                            alternative = "two.sided")
 
 
-ttest_item10_madrs <- t.test(x = df$Item10_PréMADRS,
-                       y = df$Item10_24hMADRS,
-                       paired = T)
+ttest_item10_madrs <- t.test(x = df$MADRS_Suicide_Baseline,
+                             y = df$MADRS_Suicide_Post,
+                             paired = T,
+                             alternative = "two.sided")
 
 table_madrs <- map_df(list(ttest_total_madrs, ttest_item10_madrs), tidy)
 
-table_madrs$'Dependent Variable' <- c("MADRS total score",
-                                      "MADRS item 10")
+table_madrs$'Outcome' <- c("MADRS total score",
+                           "MADRS item 10")
 
-kbl(table_madrs[c("Dependent Variable",
-                  "estimate",
-                  "statistic",
-                  "conf.low",
-                  "conf.high",
-                  "p.value")],
-      caption = "T-tests",
-      booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
+table_madrs <- table_madrs %>% rename(
+  "Mean Difference" = estimate,
+  "T statistic" = statistic,
+  "DF" = parameter,
+  "95% CI lower" = conf.high,
+  "95% CI higher" = conf.low,
+  "P-value" = p.value)
+
+kbl(table_madrs[c(9, 4, 2, 3, 1, 5, 6)],
+      caption = "T-tests", booktabs = T) %>% 
+  kable_styling(latex_options = c("hold_position"))
 
 ```
 
@@ -179,20 +184,20 @@ kbl(table_madrs[c("Dependent Variable",
 
 ## Effect sizes
 
-Effect sizes allow further interpretation of how significant are these changes from baseline to 24 hours post-ketamine treatment.
+Effect sizes allow further interpretation of changes from baseline to 24 hours post-ketamine treatment.
 
 ```{r}
-effectsize_madrs <- lsr::cohensD(df$MADRS_pré,
-                                 df$MADRS_24h,
+effectsize_madrs <- lsr::cohensD(df$MADRS_Baseline,
+                                 df$MADRS_Post,
                                  method = "paired")
 
-effectsize_item10 <- lsr::cohensD(df$Item10_PréMADRS,
-                                  df$Item10_24hMADRS,
+effectsize_item10 <- lsr::cohensD(df$MADRS_Suicide_Baseline,
+                                  df$MADRS_Suicide_Post,
                                   method = "paired")
 
 kbl(tribble(~Outcome, ~"Effect Size (Cohen's D)",
-        "MADRS total score", effectsize_madrs,
-        "MADRS item 10", effectsize_item10),
+            "MADRS total score", effectsize_madrs,
+            "MADRS item 10", effectsize_item10),
     caption = "Effect sizes",
     booktabs = T) %>% kable_styling(latex_options = c("hold_position"))
   
@@ -243,7 +248,7 @@ boot_funs <- function(df, f1, f2){
 ### Bootstrap - MADRS total score
 ```{r}
 ### Bootstrap CI - MADRS total score
-boot_funs(df, "MADRS_pré", "MADRS_24h")
+boot_funs(df, "MADRS_Baseline", "MADRS_Post")
 
 plot_madrs <- ggplot(data_dens)+
             geom_density(aes(x = dens, fill = time),
@@ -267,7 +272,7 @@ plot_madrs <- ggplot(data_dens)+
 ```{r}
 ### Bootstrap CI - MADRS item 10
 
-boot_funs(df, "Item10_PréMADRS", "Item10_24hMADRS")
+boot_funs(df, "MADRS_Suicide_Baseline", "MADRS_Suicide_Post")
 
 plot_madrs10 <- ggplot(data_dens)+
             geom_density(aes(x = dens, fill = factor(time)),
@@ -294,7 +299,8 @@ plot_madrs10 <- ggplot(data_dens)+
 
 ## Density plots of bootstrapped sample means
 
-This first part creates an annotated plot using the `ggplot2` density plots for the bootstrapped sample means and the `patchwork` package.
+Creates an annotated plot using the `{ggplot2}` density plots for the bootstrapped sample means and the `{patchwork}` package.
+
 ```{r}
 ## Density plots of bootstrapped sample means
 
@@ -321,11 +327,11 @@ ggsave("density_plot.png", plota, width=25, height=15, units="cm", dpi=450)
 
 ## Main plots: pre-and post-treatment effects for depressive symptoms and suicidal ideation
 
-This next part uses a long formatted dataset to compare pre-and post-infusion results for each patient.
+This next part uses a long formatted dataset to plot pre-and post-infusion scores for each patient.
 
 ```{r}
 ## Create dataset for total MADRS scores
-madrs_total <- c(df$MADRS_pré, df$MADRS_24h)
+madrs_total <- c(df$MADRS_Baseline, df$MADRS_Post)
 time <- rep(c("baseline", "post"), each = 10)
 id <- rep(1:10, 2)
 id <- factor(id)
@@ -364,8 +370,8 @@ madrs_plot <- madrs_data_plot %>% ggplot()+
 
 ## Create dataset for MADRS Item 10
 
-si_pre <- df$Item10_PréMADRS
-si_post <- df$Item10_24hMADRS
+si_pre <- df$MADRS_Suicide_Baseline
+si_post <- df$MADRS_Suicide_Post
 
 madrs_item10 <- c(si_pre, si_post)
 time <- rep(c("baseline", "post"), each = 10)
@@ -406,7 +412,7 @@ item10_plot <- madrs_item_plot %>% ggplot()+
 
 ```
 
-### Join and save plots!
+### Code to join plots and produce the final image using `{patchwork}`.
 
 ```{r, message = F, warning= F}
 ## Creates patchwork object
@@ -427,3 +433,4 @@ ggsave("MADRS_plot.tiff", graficos_i10, width=20, height=10, units="cm", dpi=450
 ```
 
 
+  
