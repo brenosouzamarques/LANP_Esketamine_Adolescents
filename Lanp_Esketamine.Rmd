@@ -63,16 +63,12 @@ The first step is to load the dataset into R. You can load the dataset directly 
 set.seed(2509)
 ## Load from GitHub repository
 
-urlRemote  <- "https://raw.githubusercontent.com/"
-pathGithub <- "brenosouzamarques/LANP_Esketamine_Adolescents/master/"
+urlRemote  <- "https://raw.githubusercontent.com/brenosouzamarques/"
+pathGithub <- "LANP_Esketamine_Adolescents/master/"
 fileName   <- "Dataset.csv"
 
 df <- paste0(urlRemote, pathGithub, fileName) %>% 
   read.csv()
-
-
-
-
 ```
 \newpage
 
