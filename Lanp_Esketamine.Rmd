@@ -354,15 +354,19 @@ madrs_plot <- madrs_data_plot %>% ggplot()+
                       size = 1.5)+
             scale_color_npg()+
             theme_classic()+
+            guides(alpha = "none")+
             labs(x = "Time of assessment",
-                 y = "Total MADRS scores")+
+                 y = "Total MADRS scores",
+                 color = "Patient ID")+
             theme(axis.title.x = element_text(size = 14,
                                               face = "bold"),
                   axis.text.x = element_text(size = 13),
                   axis.title.y = element_text(size = 15,
                                               face = "bold"),
                   axis.text.y = element_text(size = 13),
-                  legend.position = "none")
+                  legend.position = "bottom",
+                  legend.text = element_text(size = 13,
+                                             face = "bold"))
 
 ## Create dataset for MADRS Item 10
 
@@ -395,6 +399,7 @@ item10_plot <- madrs_item_plot %>% ggplot()+
                        position = position_dodge(0.08))+
             scale_color_npg()+
             theme_classic()+
+            guides(alpha = "none")+
             labs(x = "Time of assessment",
                  y = "MADRS item 10 scores")+
             theme(axis.title.x = element_text(size = 14,
@@ -403,7 +408,9 @@ item10_plot <- madrs_item_plot %>% ggplot()+
                   axis.title.y = element_text(size = 15,
                                               face = "bold"),
                   axis.text.y = element_text(size = 13),
-                  legend.position = "none",
+                  legend.position = "bottom",
+                  legend.text = element_text(size = 13,
+                                             face = "bold"),
                   text = element_text(family = "serif"))
 
 ```
@@ -412,10 +419,12 @@ item10_plot <- madrs_item_plot %>% ggplot()+
 
 ```{r, message = F, warning= F}
 ## Creates patchwork object
-graficos_i10 <- madrs_plot + item10_plot &
-            theme(text = element_text(family = "serif"),
-                  title = element_text(size = 16),
-                  legend.title = element_text(size = 14))
+graficos_i10 <- (madrs_plot +
+                   plot_layout(guides = "collect") &
+                   theme(legend.position = "right",
+                         text = element_text(family = "serif"))) +
+                   (item10_plot +
+                   theme(legend.position = "none"))
 
 ## Edits and annotates patchwork object
 graficos_i10 <- graficos_i10 + plot_annotation(
@@ -426,8 +435,9 @@ graficos_i10 <- graficos_i10 + plot_annotation(
                                 face = "italic"))
 
 ## Saves plot in high resolution
-ggsave("MADRS_plot.png", graficos_i10, width=20, height=10, units="cm", dpi=450)
-ggsave("MADRS_plot.tiff", graficos_i10, width=20, height=10, units="cm", dpi=450)
+ggsave("MADRS_plot.png", graficos_i10, width=23, height=12, units="cm", dpi=650)
+ggsave("MADRS_plot.tiff", graficos_i10, width=23, height=12, units="cm", dpi=450)
+ggsave("MADRS_plot.pdf", graficos_i10, width=23, height=12, units="cm", dpi=1200)
 ```
 
 
