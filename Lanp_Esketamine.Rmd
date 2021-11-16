@@ -342,7 +342,7 @@ madrs_plot <- madrs_data_plot %>% ggplot()+
             scale_y_continuous(breaks = seq(from = 10,
                                             to = 50,
                                             by = 5))+
-            scale_x_discrete(labels = c("Baseline", "24 hours post-infusion"))+
+            scale_x_discrete(labels = c("Baseline", "24 hours \npost-treatment"))+
             geom_point(aes(x = time, y = madrs_total,
                            color = id,
                            group = id),
@@ -385,7 +385,7 @@ item10_plot <- madrs_item_plot %>% ggplot()+
                          alpha = .3,
                          color = "grey")+
             scale_y_continuous(breaks = c(0, 1, 2, 3, 4, 5, 6))+
-            scale_x_discrete(labels = c("Baseline", "24 hours post-infusion"))+
+            scale_x_discrete(labels = c("Baseline", "24 hours \npost-treatment"))+
             geom_point(aes(x = time, y = madrs_item10,
                            color = id,
                            group = id),
