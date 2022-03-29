@@ -251,8 +251,7 @@ plot_madrs <- ggplot(data_dens)+
                          color = "white",
                          alpha = 0.9)+
             labs(x = "Total MADRS scores")+
-            scale_fill_brewer(name = "Time of assessment:",
-                              palette = "Dark2")+
+            scale_fill_grey(name = "Time of assessment:")+
   theme_classic()+
   theme(text = element_text(family = "serif"),
         axis.text.x = element_text(size = 14),
@@ -276,8 +275,7 @@ plot_madrs10 <- ggplot(data_dens)+
                          alpha = 0.9)+
             labs(x = "Item 10 MADRS scores",
                  y = element_blank())+
-            scale_fill_brewer(name = "Time of assessment:",
-                              palette = "Dark2")+
+            scale_fill_grey(name = "Time of assessment:")+
   theme_classic()+
   theme(text = element_text(family = "serif"),
         axis.text.x = element_text(size = 14),
@@ -344,15 +342,13 @@ madrs_plot <- madrs_data_plot %>% ggplot()+
                                             by = 5))+
             scale_x_discrete(labels = c("Baseline", "24 hours \npost-treatment"))+
             geom_point(aes(x = time, y = madrs_total,
-                           color = id,
                            group = id),
                        size = 1.5)+
             geom_line(aes(x = time, y = madrs_total,
-                          color = id,
                           group = id,
                           alpha = .4),
                       size = 1.5)+
-            scale_color_npg()+
+            scale_color_grey()+
             theme_classic()+
             guides(alpha = "none")+
             labs(x = "Time of assessment",
@@ -387,17 +383,15 @@ item10_plot <- madrs_item_plot %>% ggplot()+
             scale_y_continuous(breaks = c(0, 1, 2, 3, 4, 5, 6))+
             scale_x_discrete(labels = c("Baseline", "24 hours \npost-treatment"))+
             geom_point(aes(x = time, y = madrs_item10,
-                           color = id,
                            group = id),
                        size = 1.5,
                        position = position_dodge(0.08))+
             geom_line(aes(x = time, y = madrs_item10,
-                          color = id,
                           group = id,
                           alpha = .4),
                       size = 1.5,
                        position = position_dodge(0.08))+
-            scale_color_npg()+
+            scale_color_grey()+
             theme_classic()+
             guides(alpha = "none")+
             labs(x = "Time of assessment",
